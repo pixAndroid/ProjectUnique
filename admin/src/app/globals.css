@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply bg-slate-950 text-white; }
+}
+
+@layer components {
+  .admin-card {
+    @apply bg-slate-800 border border-slate-700 rounded-xl;
+  }
+  .admin-input {
+    @apply w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm;
+  }
+  .admin-label {
+    @apply block text-sm font-medium text-slate-300 mb-1.5;
+  }
+  .btn-admin {
+    @apply bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors;
+  }
+  .btn-ghost {
+    @apply bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-600 transition-colors;
+  }
+}

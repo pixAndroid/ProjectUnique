@@ -1,17 +1,24 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../db');
 
-const serviceSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  slug: { type: String, required: true, unique: true },
-  image: { type: String, default: '' },
-  description: { type: String, default: '' },
-  shortDescription: { type: String, default: '' },
-  metaTitle: { type: String, default: '' },
-  metaDescription: { type: String, default: '' },
-  clickCount: { type: Number, default: 0 },
-  views: { type: Number, default: 0 },
-  published: { type: Boolean, default: true },
-  order: { type: Number, default: 0 }
-}, { timestamps: true });
+const Service = sequelize.define('Service', {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  _id: { type: DataTypes.VIRTUAL, get() { return this.id; } },
+  title: { type: DataTypes.STRING, allowNull: false },
+  slug: { type: DataTypes.STRING, allowNull: false, unique: true },
+  image: { type: DataTypes.TEXT, defaultValue: '' },
+  description: { type: DataTypes.TEXT, defaultValue: '' },
+  shortDescription: { type: DataTypes.TEXT, defaultValue: '' },
+  metaTitle: { type: DataTypes.STRING, defaultValue: '' },
+  metaDescription: { type: DataTypes.TEXT, defaultValue: '' },
+  clickCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  views: { type: DataTypes.INTEGER, defaultValue: 0 },
+  published: { type: DataTypes.BOOLEAN, defaultValue: true },
+  order: { type: DataTypes.INTEGER, defaultValue: 0 }
+}, {
+  tableName: 'services',
+  timestamps: true
+});
 
-module.exports = mongoose.model('Service', serviceSchema);
+module.exports = Service;
+

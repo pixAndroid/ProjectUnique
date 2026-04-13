@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const Blog = require('../models/Blog');
 const auth = require('../middleware/auth');
 
@@ -9,13 +10,14 @@ router.get('/', async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const tag = req.query.tag;
-    const query = { published: true };
-    if (tag) query.tags = tag;
-    const total = await Blog.countDocuments(query);
-    const blogs = await Blog.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const where = { published: true };
+    if (tag) where.tags = { [Op.contains]: [tag] };
+    const { count: total, rows: blogs } = await Blog.findAndCountAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      offset: (page - 1) * limit,
+      limit
+    });
     res.json({ success: true, data: { blogs, total, page, pages: Math.ceil(total / limit) } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -25,7 +27,7 @@ router.get('/', async (req, res) => {
 // GET /api/blogs/:slug - public
 router.get('/:slug', async (req, res) => {
   try {
-    const blog = await Blog.findOne({ slug: req.params.slug, published: true });
+    const blog = await Blog.findOne({ where: { slug: req.params.slug, published: true } });
     if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
     res.json({ success: true, data: blog });
   } catch (err) {
@@ -36,8 +38,7 @@ router.get('/:slug', async (req, res) => {
 // POST /api/admin/blogs - protected
 router.post('/admin/blogs', auth, async (req, res) => {
   try {
-    const blog = new Blog(req.body);
-    await blog.save();
+    const blog = await Blog.create(req.body);
     res.status(201).json({ success: true, data: blog, message: 'Blog created' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -47,8 +48,9 @@ router.post('/admin/blogs', auth, async (req, res) => {
 // PUT /api/admin/blogs/:id - protected
 router.put('/admin/blogs/:id', auth, async (req, res) => {
   try {
-    const blog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const blog = await Blog.findByPk(req.params.id);
     if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+    await blog.update(req.body);
     res.json({ success: true, data: blog, message: 'Blog updated' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -58,8 +60,8 @@ router.put('/admin/blogs/:id', auth, async (req, res) => {
 // DELETE /api/admin/blogs/:id - protected
 router.delete('/admin/blogs/:id', auth, async (req, res) => {
   try {
-    const blog = await Blog.findByIdAndDelete(req.params.id);
-    if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+    const deleted = await Blog.destroy({ where: { id: req.params.id } });
+    if (!deleted) return res.status(404).json({ success: false, message: 'Blog not found' });
     res.json({ success: true, message: 'Blog deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -69,7 +71,7 @@ router.delete('/admin/blogs/:id', auth, async (req, res) => {
 // GET /api/admin/blogs - protected list all
 router.get('/admin/blogs', auth, async (req, res) => {
   try {
-    const blogs = await Blog.find().sort({ createdAt: -1 });
+    const blogs = await Blog.findAll({ order: [['createdAt', 'DESC']] });
     res.json({ success: true, data: blogs });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -77,3 +79,4 @@ router.get('/admin/blogs', auth, async (req, res) => {
 });
 
 module.exports = router;
+

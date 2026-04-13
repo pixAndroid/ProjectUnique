@@ -87,7 +87,7 @@ router.get('/admin/analytics', auth, async (req, res) => {
     });
 
     // Cast string counts from raw SQL to numbers
-    const toNum = rows => rows.map(r => ({ ...r, count: parseInt(r.count, 10) }));
+    const parseCountsToIntegers = rows => rows.map(r => ({ ...r, count: parseInt(r.count, 10) }));
 
     res.json({
       success: true,
@@ -95,10 +95,10 @@ router.get('/admin/analytics', auth, async (req, res) => {
         totalPageviews,
         recentPageviews,
         uniqueVisitors,
-        dailyPageviews: toNum(dailyPageviews),
-        topPages: toNum(topPages),
-        topServices: toNum(topServices),
-        topProducts: toNum(topProducts)
+        dailyPageviews: parseCountsToIntegers(dailyPageviews),
+        topPages: parseCountsToIntegers(topPages),
+        topServices: parseCountsToIntegers(topServices),
+        topProducts: parseCountsToIntegers(topProducts)
       }
     });
   } catch (err) {

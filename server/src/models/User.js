@@ -12,7 +12,7 @@ const User = sequelize.define('User', {
   tableName: 'users',
   timestamps: true,
   createdAt: 'createdAt',
-  updatedAt: false
+  updatedAt: 'updatedAt'
 });
 
 User.beforeSave(async (user) => {

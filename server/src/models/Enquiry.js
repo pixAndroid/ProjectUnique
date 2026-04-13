@@ -17,7 +17,7 @@ const Enquiry = sequelize.define('Enquiry', {
   tableName: 'enquiries',
   timestamps: true,
   createdAt: 'createdAt',
-  updatedAt: false
+  updatedAt: 'updatedAt'
 });
 
 module.exports = Enquiry;

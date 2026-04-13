@@ -65,6 +65,13 @@ async function seedData() {
       role: 'admin'
     });
     console.log('Admin user seeded');
+  } else {
+    const passwordValid = await existingAdmin.comparePassword('Admin@123');
+    if (!passwordValid) {
+      existingAdmin.password = 'Admin@123';
+      await existingAdmin.save();
+      console.log('Admin user credentials updated');
+    }
   }
 
   // Seed services

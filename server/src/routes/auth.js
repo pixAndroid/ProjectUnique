@@ -17,12 +17,12 @@ router.post(
     }
     try {
       const { email, password } = req.body;
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ where: { email } });
       if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
       const match = await user.comparePassword(password);
       if (!match) return res.status(401).json({ success: false, message: 'Invalid credentials' });
-      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-      res.json({ success: true, data: { token, user: { id: user._id, email: user.email, role: user.role } }, message: 'Login successful' });
+      const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      res.json({ success: true, data: { token, user: { id: user.id, email: user.email, role: user.role } }, message: 'Login successful' });
     } catch (err) {
       res.status(500).json({ success: false, message: 'Server error' });
     }
@@ -30,3 +30,4 @@ router.post(
 );
 
 module.exports = router;
+

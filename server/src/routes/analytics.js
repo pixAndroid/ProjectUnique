@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { QueryTypes, Op } = require('sequelize');
+const sequelize = require('../db');
 const Analytics = require('../models/Analytics');
 const auth = require('../middleware/auth');
 
@@ -7,7 +9,7 @@ const auth = require('../middleware/auth');
 router.post('/track', async (req, res) => {
   try {
     const { type, page, referenceId, referenceType } = req.body;
-    const event = new Analytics({
+    const event = await Analytics.create({
       type: type || 'pageview',
       page: page || '',
       referenceId: referenceId || '',
@@ -16,7 +18,6 @@ router.post('/track', async (req, res) => {
       userAgent: req.headers['user-agent'] || '',
       timestamp: new Date()
     });
-    await event.save();
     res.json({ success: true, message: 'Event tracked' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -28,61 +29,76 @@ router.get('/admin/analytics', auth, async (req, res) => {
   try {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     // Total counts
-    const totalPageviews = await Analytics.countDocuments({ type: 'pageview' });
-    const recentPageviews = await Analytics.countDocuments({ type: 'pageview', timestamp: { $gte: thirtyDaysAgo } });
+    const totalPageviews = await Analytics.count({ where: { type: 'pageview' } });
+    const recentPageviews = await Analytics.count({
+      where: { type: 'pageview', timestamp: { [Op.gte]: thirtyDaysAgo } }
+    });
 
     // Daily pageviews for last 30 days
-    const dailyPageviews = await Analytics.aggregate([
-      { $match: { type: 'pageview', timestamp: { $gte: thirtyDaysAgo } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+    const dailyPageviews = await sequelize.query(
+      `SELECT TO_CHAR("timestamp", 'YYYY-MM-DD') AS "_id", COUNT(*) AS count
+       FROM analytics
+       WHERE type = 'pageview' AND "timestamp" >= :thirtyDaysAgo
+       GROUP BY TO_CHAR("timestamp", 'YYYY-MM-DD')
+       ORDER BY "_id" ASC`,
+      { replacements: { thirtyDaysAgo }, type: QueryTypes.SELECT }
+    );
 
     // Top pages
-    const topPages = await Analytics.aggregate([
-      { $match: { type: 'pageview', timestamp: { $gte: thirtyDaysAgo } } },
-      { $group: { _id: '$page', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
+    const topPages = await sequelize.query(
+      `SELECT page AS "_id", COUNT(*) AS count
+       FROM analytics
+       WHERE type = 'pageview' AND "timestamp" >= :thirtyDaysAgo
+       GROUP BY page
+       ORDER BY count DESC
+       LIMIT 10`,
+      { replacements: { thirtyDaysAgo }, type: QueryTypes.SELECT }
+    );
 
     // Top services clicked
-    const topServices = await Analytics.aggregate([
-      { $match: { type: 'service_view', timestamp: { $gte: thirtyDaysAgo } } },
-      { $group: { _id: '$referenceId', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
-    ]);
+    const topServices = await sequelize.query(
+      `SELECT "referenceId" AS "_id", COUNT(*) AS count
+       FROM analytics
+       WHERE type = 'service_view' AND "timestamp" >= :thirtyDaysAgo
+       GROUP BY "referenceId"
+       ORDER BY count DESC
+       LIMIT 5`,
+      { replacements: { thirtyDaysAgo }, type: QueryTypes.SELECT }
+    );
 
     // Top products clicked
-    const topProducts = await Analytics.aggregate([
-      { $match: { type: 'product_view', timestamp: { $gte: thirtyDaysAgo } } },
-      { $group: { _id: '$referenceId', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
-    ]);
+    const topProducts = await sequelize.query(
+      `SELECT "referenceId" AS "_id", COUNT(*) AS count
+       FROM analytics
+       WHERE type = 'product_view' AND "timestamp" >= :thirtyDaysAgo
+       GROUP BY "referenceId"
+       ORDER BY count DESC
+       LIMIT 5`,
+      { replacements: { thirtyDaysAgo }, type: QueryTypes.SELECT }
+    );
 
     // Unique visitors (by IP) last 30 days
-    const uniqueVisitors = await Analytics.distinct('ip', { timestamp: { $gte: thirtyDaysAgo } });
+    const uniqueVisitors = await Analytics.count({
+      distinct: true,
+      col: 'ip',
+      where: { timestamp: { [Op.gte]: thirtyDaysAgo } }
+    });
+
+    // Cast string counts from raw SQL to numbers
+    const toNum = rows => rows.map(r => ({ ...r, count: parseInt(r.count, 10) }));
 
     res.json({
       success: true,
       data: {
         totalPageviews,
         recentPageviews,
-        uniqueVisitors: uniqueVisitors.length,
-        dailyPageviews,
-        topPages,
-        topServices,
-        topProducts
+        uniqueVisitors,
+        dailyPageviews: toNum(dailyPageviews),
+        topPages: toNum(topPages),
+        topServices: toNum(topServices),
+        topProducts: toNum(topProducts)
       }
     });
   } catch (err) {
@@ -91,3 +107,4 @@ router.get('/admin/analytics', auth, async (req, res) => {
 });
 
 module.exports = router;
+

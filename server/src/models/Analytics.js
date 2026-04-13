@@ -1,17 +1,23 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../db');
 
-const analyticsSchema = new mongoose.Schema({
+const Analytics = sequelize.define('Analytics', {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  _id: { type: DataTypes.VIRTUAL, get() { return this.id; } },
   type: {
-    type: String,
-    enum: ['pageview', 'click', 'service_view', 'product_view'],
-    required: true
+    type: DataTypes.ENUM('pageview', 'click', 'service_view', 'product_view'),
+    allowNull: false
   },
-  page: { type: String, default: '' },
-  referenceId: { type: String, default: '' },
-  referenceType: { type: String, default: '' },
-  ip: { type: String, default: '' },
-  userAgent: { type: String, default: '' },
-  timestamp: { type: Date, default: Date.now }
+  page: { type: DataTypes.STRING, defaultValue: '' },
+  referenceId: { type: DataTypes.STRING, defaultValue: '' },
+  referenceType: { type: DataTypes.STRING, defaultValue: '' },
+  ip: { type: DataTypes.STRING, defaultValue: '' },
+  userAgent: { type: DataTypes.TEXT, defaultValue: '' },
+  timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'analytics',
+  timestamps: false
 });
 
-module.exports = mongoose.model('Analytics', analyticsSchema);
+module.exports = Analytics;
+

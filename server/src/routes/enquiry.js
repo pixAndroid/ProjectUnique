@@ -8,8 +8,7 @@ router.post('/enquiry', async (req, res) => {
   try {
     const { name, phone, email, serviceRequired, message } = req.body;
     if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
-    const enquiry = new Enquiry({ name, phone, email, serviceRequired, message });
-    await enquiry.save();
+    const enquiry = await Enquiry.create({ name, phone, email, serviceRequired, message });
     res.status(201).json({ success: true, data: enquiry, message: 'Enquiry submitted successfully' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -19,7 +18,7 @@ router.post('/enquiry', async (req, res) => {
 // GET /api/admin/enquiries - protected
 router.get('/admin/enquiries', auth, async (req, res) => {
   try {
-    const enquiries = await Enquiry.find().sort({ createdAt: -1 });
+    const enquiries = await Enquiry.findAll({ order: [['createdAt', 'DESC']] });
     res.json({ success: true, data: enquiries });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -29,8 +28,9 @@ router.get('/admin/enquiries', auth, async (req, res) => {
 // PUT /api/admin/enquiries/:id - protected
 router.put('/admin/enquiries/:id', auth, async (req, res) => {
   try {
-    const enquiry = await Enquiry.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    const enquiry = await Enquiry.findByPk(req.params.id);
     if (!enquiry) return res.status(404).json({ success: false, message: 'Enquiry not found' });
+    await enquiry.update({ status: req.body.status });
     res.json({ success: true, data: enquiry, message: 'Status updated' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -38,3 +38,4 @@ router.put('/admin/enquiries/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+

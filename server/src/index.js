@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
 
+const sequelize = require('./db');
 const authRoutes = require('./routes/auth');
 const blogRoutes = require('./routes/blogs');
 const serviceRoutes = require('./routes/services');
@@ -35,12 +35,13 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/uniqueaircon';
 
 async function startServer() {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('MongoDB connected');
+    await sequelize.authenticate();
+    console.log('PostgreSQL connected');
+    await sequelize.sync({ alter: true });
+    console.log('Database tables synced');
     await seedData();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (err) {
@@ -56,7 +57,7 @@ async function seedData() {
   const Blog = require('./models/Blog');
 
   // Seed admin user
-  const existingAdmin = await User.findOne({ email: 'admin@uniqueaircon.com' });
+  const existingAdmin = await User.findOne({ where: { email: 'admin@uniqueaircon.com' } });
   if (!existingAdmin) {
     await User.create({
       email: 'admin@uniqueaircon.com',
@@ -67,9 +68,9 @@ async function seedData() {
   }
 
   // Seed services
-  const servicesCount = await Service.countDocuments();
+  const servicesCount = await Service.count();
   if (servicesCount === 0) {
-    await Service.insertMany([
+    await Service.bulkCreate([
       {
         title: 'AC Repair & Maintenance',
         slug: 'ac-repair-maintenance',
@@ -130,9 +131,9 @@ async function seedData() {
   }
 
   // Seed products
-  const productsCount = await Product.countDocuments();
+  const productsCount = await Product.count();
   if (productsCount === 0) {
-    await Product.insertMany([
+    await Product.bulkCreate([
       {
         title: 'AC Filter Replacement Kit',
         slug: 'ac-filter-replacement-kit',
@@ -188,9 +189,9 @@ async function seedData() {
   }
 
   // Seed blog posts
-  const blogsCount = await Blog.countDocuments();
+  const blogsCount = await Blog.count();
   if (blogsCount === 0) {
-    await Blog.insertMany([
+    await Blog.bulkCreate([
       {
         title: 'How to Maintain Your AC for Peak Performance',
         slug: 'how-to-maintain-your-ac-for-peak-performance',
@@ -278,3 +279,4 @@ async function seedData() {
 }
 
 startServer();
+

@@ -6,6 +6,8 @@ import TestimonialsSection from '@/components/TestimonialsSection';
 import CallToAction from '@/components/CallToAction';
 import PageTracker from '@/components/PageTracker';
 
+export const dynamic = 'force-dynamic';
+
 async function getData() {
   try {
     const [servicesRes, productsRes] = await Promise.all([

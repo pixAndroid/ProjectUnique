@@ -3,6 +3,8 @@ import ProductCard from '@/components/ProductCard';
 import PageTracker from '@/components/PageTracker';
 import { FaBox } from 'react-icons/fa';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Products | Unique Air Conditioning',
   description: 'AC parts, refrigerants, and accessories for all your air conditioning needs.'

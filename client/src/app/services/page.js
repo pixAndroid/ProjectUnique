@@ -3,6 +3,8 @@ import ServiceCard from '@/components/ServiceCard';
 import PageTracker from '@/components/PageTracker';
 import { FaWrench } from 'react-icons/fa';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Our Services | Unique Air Conditioning',
   description: 'Professional AC services including repair, installation, gas refilling, AMC, and commercial refrigeration.'

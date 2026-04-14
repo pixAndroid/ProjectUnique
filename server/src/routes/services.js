@@ -106,5 +106,20 @@ router.get('/admin/services', auth, async (req, res) => {
   }
 });
 
+// GET /api/admin/services/:id - protected single service by id
+router.get('/admin/services/:id', auth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid service ID' });
+    }
+    const service = await Service.findByPk(id);
+    if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
+    res.json({ success: true, data: service });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;
 

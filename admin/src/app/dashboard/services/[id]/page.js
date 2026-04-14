@@ -1,24 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import ServiceForm from '@/components/ServiceForm';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function EditServicePage({ params }) {
+  const { id } = use(params);
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/api/admin/services')
-      .then(res => {
-        const found = (res.data?.data || []).find(s => s._id === params.id);
-        setService(found || null);
-      })
+    api.get(`/api/admin/services/${id}`)
+      .then(res => setService(res.data?.data || null))
       .catch(() => toast.error('Failed to load service'))
       .finally(() => setLoading(false));
-  }, [params.id]);
+  }, [id]);
 
   return (
     <div className="flex-1 overflow-auto">

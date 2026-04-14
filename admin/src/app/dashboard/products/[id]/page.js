@@ -1,24 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import ProductForm from '@/components/ProductForm';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function EditProductPage({ params }) {
+  const { id } = use(params);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/api/admin/products')
-      .then(res => {
-        const found = (res.data?.data || []).find(p => p._id === params.id);
-        setProduct(found || null);
-      })
+    api.get(`/api/admin/products/${id}`)
+      .then(res => setProduct(res.data?.data || null))
       .catch(() => toast.error('Failed to load product'))
       .finally(() => setLoading(false));
-  }, [params.id]);
+  }, [id]);
 
   return (
     <div className="flex-1 overflow-auto">

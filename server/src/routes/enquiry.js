@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Enquiry = require('../models/Enquiry');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
+const { broadcast } = require('../lib/sseBroadcast');
 
 // POST /api/enquiry - public
 router.post('/enquiry', async (req, res) => {
@@ -9,6 +11,16 @@ router.post('/enquiry', async (req, res) => {
     const { name, phone, email, serviceRequired, message } = req.body;
     if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
     const enquiry = await Enquiry.create({ name, phone, email, serviceRequired, message });
+
+    // Create notification and broadcast to admin SSE clients
+    const newEnquiriesCount = await Enquiry.count({ where: { status: 'new' } });
+    const notification = await Notification.create({
+      type: 'new_enquiry',
+      message: `New enquiry from ${name}${serviceRequired ? ` for ${serviceRequired}` : ''}`,
+      meta: { enquiryId: enquiry.id, name, serviceRequired }
+    });
+    broadcast('new_enquiry', { notification, newEnquiriesCount });
+
     res.status(201).json({ success: true, data: enquiry, message: 'Enquiry submitted successfully' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

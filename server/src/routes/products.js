@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
+const { broadcast } = require('../lib/sseBroadcast');
+const { crossedMilestone, milestone } = require('../lib/milestones');
 
 // GET /api/products - public
 router.get('/', async (req, res) => {
@@ -21,9 +24,40 @@ router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    const prevViews = product.views;
     product.views += 1;
     await product.save();
+    if (crossedMilestone(prevViews, product.views)) {
+      const notification = await Notification.create({
+        type: 'milestone_view',
+        message: `Product "${product.title}" reached ${milestone(product.views)} views`,
+        meta: { productId: product.id, title: product.title, count: product.views }
+      });
+      broadcast('notification', { notification });
+    }
     res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// POST /api/products/:id/click - public (track click count)
+router.post('/:id/click', async (req, res) => {
+  try {
+    const product = await Product.findByPk(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    const prevClicks = product.clickCount;
+    product.clickCount += 1;
+    await product.save();
+    if (crossedMilestone(prevClicks, product.clickCount)) {
+      const notification = await Notification.create({
+        type: 'milestone_click',
+        message: `Product "${product.title}" reached ${milestone(product.clickCount)} clicks`,
+        meta: { productId: product.id, title: product.title, count: product.clickCount }
+      });
+      broadcast('notification', { notification });
+    }
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }

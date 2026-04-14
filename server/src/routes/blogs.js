@@ -106,5 +106,16 @@ router.get('/admin/blogs', auth, async (req, res) => {
   }
 });
 
+// GET /api/admin/blogs/:id - protected single blog by id
+router.get('/admin/blogs/:id', auth, async (req, res) => {
+  try {
+    const blog = await Blog.findByPk(req.params.id);
+    if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+    res.json({ success: true, data: blog });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;
 

@@ -11,11 +11,8 @@ export default function EditBlogPage({ params }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get(`/api/admin/blogs`)
-      .then(res => {
-        const found = (res.data?.data || []).find(b => b._id === params.id);
-        setBlog(found || null);
-      })
+    api.get(`/api/admin/blogs/${params.id}`)
+      .then(res => setBlog(res.data?.data || null))
       .catch(() => toast.error('Failed to load blog'))
       .finally(() => setLoading(false));
   }, [params.id]);

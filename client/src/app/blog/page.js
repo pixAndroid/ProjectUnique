@@ -2,6 +2,8 @@ import api from '@/lib/api';
 import BlogCard from '@/components/BlogCard';
 import PageTracker from '@/components/PageTracker';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Blog | Unique Air Conditioning',
   description: 'Tips, guides, and news about air conditioning and refrigeration.'

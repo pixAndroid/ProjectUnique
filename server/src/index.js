@@ -11,12 +11,18 @@ const productRoutes = require('./routes/products');
 const analyticsRoutes = require('./routes/analytics');
 const enquiryRoutes = require('./routes/enquiry');
 const notificationRoutes = require('./routes/notifications');
+const uploadRoutes = require('./routes/upload');
+
+const path = require('path');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+
+// Serve uploaded images statically
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // Public routes
 app.use('/api', authRoutes);
@@ -26,6 +32,7 @@ app.use('/api/products', productRoutes);
 app.use('/api', analyticsRoutes);
 app.use('/api', enquiryRoutes);
 app.use('/api', notificationRoutes);
+app.use('/api', uploadRoutes);
 
 // Protected blog/service/product admin routes
 app.use('/api', blogRoutes);

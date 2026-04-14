@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import ImagePicker from '@/components/ImagePicker';
 
 const TiptapEditor = dynamic(() => import('./TiptapEditor'), { ssr: false, loading: () => (
   <div className="h-64 bg-slate-700 rounded-lg flex items-center justify-center text-slate-400">Loading editor...</div>
@@ -73,11 +74,11 @@ export default function BlogForm({ blog }) {
       </div>
 
       <div>
-        <label className="admin-label">Image URL</label>
-        <input name="image" value={form.image} onChange={handleChange} className="admin-input" placeholder="https://..." />
-        {form.image && (
-          <img src={form.image} alt="Preview" className="mt-2 h-32 w-full object-cover rounded-lg" onError={e => e.target.style.display = 'none'} />
-        )}
+        <label className="admin-label">Image</label>
+        <ImagePicker
+          value={form.image}
+          onChange={url => setForm(prev => ({ ...prev, image: url }))}
+        />
       </div>
 
       <div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import api from '@/lib/api';
+import { useNotifications } from '@/lib/useNotifications';
 import { FaEnvelope, FaPhone } from 'react-icons/fa';
 
 const statusColors = {
@@ -16,6 +17,7 @@ export default function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
+  const { refreshNewEnquiries } = useNotifications();
 
   const fetchEnquiries = async () => {
     try {
@@ -35,6 +37,7 @@ export default function EnquiriesPage() {
       await api.put(`/api/admin/enquiries/${id}`, { status });
       setEnquiries(prev => prev.map(e => e._id === id ? { ...e, status } : e));
       toast.success('Status updated');
+      refreshNewEnquiries();
     } catch {
       toast.error('Failed to update status');
     }

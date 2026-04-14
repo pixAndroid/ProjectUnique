@@ -127,7 +127,7 @@ export function NotificationsProvider({ children }) {
 
   return (
     <NotificationsContext.Provider
-      value={{ notifications, unreadCount, newEnquiries, markRead, markAllRead, clearAll }}
+      value={{ notifications, unreadCount, newEnquiries, markRead, markAllRead, clearAll, refreshNewEnquiries: fetchNewEnquiries }}
     >
       {children}
     </NotificationsContext.Provider>

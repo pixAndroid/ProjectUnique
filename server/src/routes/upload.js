@@ -12,6 +12,10 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+function getBaseUrl() {
+  return process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+}
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
   filename: (_req, file, cb) => {
@@ -37,16 +41,15 @@ const upload = multer({
 // POST /api/admin/upload - upload a single image
 router.post('/admin/upload', auth, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, message: 'No image uploaded' });
-  const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
-  const url = `${baseUrl}/uploads/${req.file.filename}`;
+  const url = `${getBaseUrl()}/uploads/${req.file.filename}`;
   res.status(201).json({ success: true, url });
 });
 
 // GET /api/admin/images - list uploaded images
-router.get('/admin/images', auth, (req, res) => {
+router.get('/admin/images', auth, async (req, res) => {
   try {
-    const files = fs.readdirSync(UPLOAD_DIR);
-    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const files = await fs.promises.readdir(UPLOAD_DIR);
+    const baseUrl = getBaseUrl();
     const images = files
       .filter(f => /\.(jpe?g|png|gif|webp|svg)$/i.test(f))
       .map(f => ({
@@ -55,7 +58,7 @@ router.get('/admin/images', auth, (req, res) => {
       }));
     res.json({ success: true, data: images });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to list images' });
+    res.status(500).json({ success: false, message: `Failed to list images: ${err.message}` });
   }
 });
 

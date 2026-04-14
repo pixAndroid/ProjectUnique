@@ -4,6 +4,26 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import api from '@/lib/api';
 import { getToken } from '@/lib/auth';
 
+function playDing() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.4);
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.5);
+    oscillator.onended = () => ctx.close();
+  } catch {
+    // ignore if audio not supported
+  }
+}
+
 const NotificationsContext = createContext(null);
 
 export function NotificationsProvider({ children }) {
@@ -64,6 +84,7 @@ export function NotificationsProvider({ children }) {
             setUnreadCount(c => c + 1);
           }
           setNewEnquiryTick(t => t + 1);
+          playDing();
         } catch {
           // ignore
         }

@@ -4,14 +4,7 @@ const Service = require('../models/Service');
 const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 const { broadcast } = require('../lib/sseBroadcast');
-
-// Helper: check if a counter crossed a 100-milestone
-function crossedMilestone(before, after) {
-  return after > 0 && Math.floor(after / 100) > Math.floor(before / 100);
-}
-function milestone(value) {
-  return Math.floor(value / 100) * 100;
-}
+const { crossedMilestone, milestone } = require('../lib/milestones');
 
 // GET /api/services - public
 router.get('/', async (req, res) => {

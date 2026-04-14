@@ -1,10 +1,20 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 const { addClient, removeClient, broadcast } = require('../lib/sseBroadcast');
+
+// Rate limiter for admin notification endpoints (100 req / 15 min per IP)
+const adminNotifLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests, please try again later.' }
+});
 
 // Helper to verify token from query param (used by SSE since EventSource cannot set headers)
 async function verifyTokenParam(token) {
@@ -19,7 +29,7 @@ async function verifyTokenParam(token) {
 }
 
 // GET /api/admin/notifications/stream – SSE stream (token passed as ?token=)
-router.get('/admin/notifications/stream', async (req, res) => {
+router.get('/admin/notifications/stream', adminNotifLimiter, async (req, res) => {
   const user = await verifyTokenParam(req.query.token);
   if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
@@ -43,7 +53,7 @@ router.get('/admin/notifications/stream', async (req, res) => {
 });
 
 // GET /api/admin/notifications – list (most recent 50)
-router.get('/admin/notifications', auth, async (req, res) => {
+router.get('/admin/notifications', adminNotifLimiter, auth, async (req, res) => {
   try {
     const notifications = await Notification.findAll({
       order: [['createdAt', 'DESC']],
@@ -57,7 +67,7 @@ router.get('/admin/notifications', auth, async (req, res) => {
 });
 
 // PUT /api/admin/notifications/:id/read – mark single as read
-router.put('/admin/notifications/:id/read', auth, async (req, res) => {
+router.put('/admin/notifications/:id/read', adminNotifLimiter, auth, async (req, res) => {
   try {
     const n = await Notification.findByPk(req.params.id);
     if (!n) return res.status(404).json({ success: false, message: 'Not found' });
@@ -69,7 +79,7 @@ router.put('/admin/notifications/:id/read', auth, async (req, res) => {
 });
 
 // PUT /api/admin/notifications/read-all – mark all as read
-router.put('/admin/notifications/read-all', auth, async (req, res) => {
+router.put('/admin/notifications/read-all', adminNotifLimiter, auth, async (req, res) => {
   try {
     await Notification.update({ read: true }, { where: { read: false } });
     res.json({ success: true, message: 'All marked as read' });
@@ -79,7 +89,7 @@ router.put('/admin/notifications/read-all', auth, async (req, res) => {
 });
 
 // DELETE /api/admin/notifications/clear – delete all
-router.delete('/admin/notifications/clear', auth, async (req, res) => {
+router.delete('/admin/notifications/clear', adminNotifLimiter, auth, async (req, res) => {
   try {
     await Notification.destroy({ where: {} });
     res.json({ success: true, message: 'All notifications cleared' });

@@ -40,7 +40,7 @@ export default function DashboardPage() {
       }
     };
     fetchAll();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // initial load only — runs once on mount
 
   // Re-fetch recent enquiries when a new enquiry arrives via SSE
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import api from '@/lib/api';
@@ -19,7 +19,7 @@ export default function EnquiriesPage() {
   const [expanded, setExpanded] = useState(null);
   const { refreshNewEnquiries, newEnquiryTick } = useNotifications();
 
-  const fetchEnquiries = async () => {
+  const fetchEnquiries = useCallback(async () => {
     try {
       const res = await api.get('/api/admin/enquiries');
       setEnquiries(res.data?.data || []);
@@ -28,9 +28,9 @@ export default function EnquiriesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchEnquiries(); }, [newEnquiryTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchEnquiries(); }, [fetchEnquiries, newEnquiryTick]);
 
   const updateStatus = async (id, status) => {
     try {

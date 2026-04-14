@@ -10,6 +10,7 @@ export function NotificationsProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [newEnquiries, setNewEnquiries] = useState(0);
+  const [newEnquiryTick, setNewEnquiryTick] = useState(0);
   const esRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
@@ -62,6 +63,7 @@ export function NotificationsProvider({ children }) {
             setNotifications(prev => [payload.notification, ...prev]);
             setUnreadCount(c => c + 1);
           }
+          setNewEnquiryTick(t => t + 1);
         } catch {
           // ignore
         }
@@ -127,7 +129,7 @@ export function NotificationsProvider({ children }) {
 
   return (
     <NotificationsContext.Provider
-      value={{ notifications, unreadCount, newEnquiries, markRead, markAllRead, clearAll, refreshNewEnquiries: fetchNewEnquiries }}
+      value={{ notifications, unreadCount, newEnquiries, newEnquiryTick, markRead, markAllRead, clearAll, refreshNewEnquiries: fetchNewEnquiries }}
     >
       {children}
     </NotificationsContext.Provider>

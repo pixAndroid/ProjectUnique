@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState(null);
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { newEnquiries } = useNotifications();
+  const { newEnquiries, newEnquiryTick } = useNotifications();
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -40,7 +40,19 @@ export default function DashboardPage() {
       }
     };
     fetchAll();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-fetch recent enquiries when a new enquiry arrives via SSE
+  useEffect(() => {
+    if (newEnquiryTick === 0) return;
+    api.get('/api/admin/enquiries')
+      .then(res => {
+        const data = res.data?.data || [];
+        setStats(prev => ({ ...prev, enquiries: data.length }));
+        setEnquiries(data.slice(0, 5));
+      })
+      .catch(() => {});
+  }, [newEnquiryTick]);
 
   const statusColors = { new: 'bg-blue-500/20 text-blue-400', read: 'bg-yellow-500/20 text-yellow-400', replied: 'bg-green-500/20 text-green-400' };
 
@@ -95,7 +107,7 @@ export default function DashboardPage() {
               <p className="text-slate-400 text-sm p-4">No enquiries yet</p>
             ) : (
               enquiries.map(e => (
-                <div key={e._id} className="p-4 flex items-center justify-between">
+                <div key={e.id} className="p-4 flex items-center justify-between">
                   <div>
                     <p className="text-white text-sm font-medium">{e.name}</p>
                     <p className="text-slate-400 text-xs">{e.email || e.phone} · {e.serviceRequired}</p>

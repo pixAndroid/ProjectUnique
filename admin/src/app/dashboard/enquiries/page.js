@@ -17,7 +17,7 @@ export default function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
-  const { refreshNewEnquiries } = useNotifications();
+  const { refreshNewEnquiries, newEnquiryTick } = useNotifications();
 
   const fetchEnquiries = async () => {
     try {
@@ -30,12 +30,12 @@ export default function EnquiriesPage() {
     }
   };
 
-  useEffect(() => { fetchEnquiries(); }, []);
+  useEffect(() => { fetchEnquiries(); }, [newEnquiryTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateStatus = async (id, status) => {
     try {
       await api.put(`/api/admin/enquiries/${id}`, { status });
-      setEnquiries(prev => prev.map(e => e._id === id ? { ...e, status } : e));
+      setEnquiries(prev => prev.map(e => e.id === id ? { ...e, status } : e));
       toast.success('Status updated');
       refreshNewEnquiries();
     } catch {
@@ -61,10 +61,10 @@ export default function EnquiriesPage() {
         ) : (
           <div className="space-y-3">
             {enquiries.map(e => (
-              <div key={e._id} className="admin-card overflow-hidden">
+              <div key={e.id} className="admin-card overflow-hidden">
                 <div
                   className="p-4 cursor-pointer hover:bg-slate-700/20 transition-colors"
-                  onClick={() => setExpanded(expanded === e._id ? null : e._id)}
+                  onClick={() => setExpanded(expanded === e.id ? null : e.id)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -88,7 +88,7 @@ export default function EnquiriesPage() {
                   </div>
                 </div>
 
-                {expanded === e._id && (
+                {expanded === e.id && (
                   <div className="px-4 pb-4 border-t border-slate-700">
                     {e.message && (
                       <div className="mt-3 p-3 bg-slate-700/30 rounded-lg">
@@ -101,7 +101,7 @@ export default function EnquiriesPage() {
                       {['new', 'read', 'replied'].map(s => (
                         <button
                           key={s}
-                          onClick={() => updateStatus(e._id, s)}
+                          onClick={() => updateStatus(e.id, s)}
                           className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
                             e.status === s
                               ? statusColors[s]

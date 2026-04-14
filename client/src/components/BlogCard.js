@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaCalendar, FaTag } from 'react-icons/fa';
+import { resolveImageUrl } from '@/lib/imageUtils';
 
 export default function BlogCard({ post, index = 0 }) {
   const date = new Date(post.createdAt).toLocaleDateString('en-IN', {
@@ -20,7 +21,7 @@ export default function BlogCard({ post, index = 0 }) {
       <div className="h-52 bg-gradient-to-br from-primary-100 to-accent-500/20 overflow-hidden">
         {post.image ? (
           <img
-            src={post.image}
+            src={resolveImageUrl(post.image)}
             alt={post.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

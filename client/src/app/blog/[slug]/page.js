@@ -2,6 +2,9 @@ import api from '@/lib/api';
 import PageTracker from '@/components/PageTracker';
 import Link from 'next/link';
 import { FaArrowLeft, FaCalendar, FaTag } from 'react-icons/fa';
+import { resolveImageUrl } from '@/lib/imageUtils';
+
+export const dynamic = 'force-dynamic';
 
 async function getBlog(slug) {
   try {
@@ -61,7 +64,7 @@ export default async function BlogDetailPage({ params }) {
         <article className="card overflow-hidden">
           {blog.image && (
             <div className="h-72 overflow-hidden">
-              <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
+              <img src={resolveImageUrl(blog.image)} alt={blog.title} className="w-full h-full object-cover" />
             </div>
           )}
           <div className="p-8">

@@ -1,21 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import BlogForm from '@/components/BlogForm';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function EditBlogPage({ params }) {
+  const { id } = use(params);
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get(`/api/admin/blogs/${params.id}`)
+    api.get(`/api/admin/blogs/${id}`)
       .then(res => setBlog(res.data?.data || null))
       .catch(() => toast.error('Failed to load blog'))
       .finally(() => setLoading(false));
-  }, [params.id]);
+  }, [id]);
 
   return (
     <div className="flex-1 overflow-auto">

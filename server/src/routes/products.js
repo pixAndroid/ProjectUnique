@@ -106,5 +106,20 @@ router.get('/admin/products', auth, async (req, res) => {
   }
 });
 
+// GET /api/admin/products/:id - protected single product by id
+router.get('/admin/products/:id', auth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid product ID' });
+    }
+    const product = await Product.findByPk(id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;
 

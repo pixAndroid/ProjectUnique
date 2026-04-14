@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import StatsCard from '@/components/StatsCard';
 import { PageViewsChart, TopPagesChart } from '@/components/AnalyticsChart';
+import { useNotifications } from '@/lib/useNotifications';
 import api from '@/lib/api';
 import { FaBlog, FaTools, FaBox, FaEnvelope, FaEye, FaUsers } from 'react-icons/fa';
 
@@ -12,6 +13,7 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState(null);
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { newEnquiries } = useNotifications();
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -51,7 +53,15 @@ export default function DashboardPage() {
           <StatsCard title="Total Blogs" value={stats.blogs} icon={FaBlog} color="indigo" />
           <StatsCard title="Services" value={stats.services} icon={FaTools} color="blue" />
           <StatsCard title="Products" value={stats.products} icon={FaBox} color="green" />
-          <StatsCard title="Enquiries" value={stats.enquiries} icon={FaEnvelope} color="yellow" />
+          {/* Enquiries card with real-time new enquiries badge */}
+          <div className="relative">
+            <StatsCard title="Enquiries" value={stats.enquiries} icon={FaEnvelope} color="yellow" />
+            {newEnquiries > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold min-w-[22px] h-[22px] flex items-center justify-center rounded-full px-1 shadow-lg z-10">
+                {newEnquiries > 99 ? '99+' : newEnquiries}
+              </span>
+            )}
+          </div>
         </div>
 
         {analytics && (
@@ -72,8 +82,13 @@ export default function DashboardPage() {
 
         {/* Recent Enquiries */}
         <div className="admin-card">
-          <div className="p-4 border-b border-slate-700">
+          <div className="p-4 border-b border-slate-700 flex items-center justify-between">
             <h3 className="text-white font-semibold">Recent Enquiries</h3>
+            {newEnquiries > 0 && (
+              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {newEnquiries} new
+              </span>
+            )}
           </div>
           <div className="divide-y divide-slate-700">
             {enquiries.length === 0 ? (

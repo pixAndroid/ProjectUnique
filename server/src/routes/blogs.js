@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const Blog = require('../models/Blog');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
+const { broadcast } = require('../lib/sseBroadcast');
 
 // GET /api/blogs - public
 router.get('/', async (req, res) => {
@@ -39,6 +41,14 @@ router.get('/:slug', async (req, res) => {
 router.post('/admin/blogs', auth, async (req, res) => {
   try {
     const blog = await Blog.create(req.body);
+    if (blog.published) {
+      const notification = await Notification.create({
+        type: 'blog_published',
+        message: `Blog "${blog.title}" was published`,
+        meta: { blogId: blog.id, title: blog.title }
+      });
+      broadcast('notification', { notification });
+    }
     res.status(201).json({ success: true, data: blog, message: 'Blog created' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -50,7 +60,25 @@ router.put('/admin/blogs/:id', auth, async (req, res) => {
   try {
     const blog = await Blog.findByPk(req.params.id);
     if (!blog) return res.status(404).json({ success: false, message: 'Blog not found' });
+    const wasPublished = blog.published;
     await blog.update(req.body);
+    if (!wasPublished && blog.published) {
+      // Just got published
+      const notification = await Notification.create({
+        type: 'blog_published',
+        message: `Blog "${blog.title}" was published`,
+        meta: { blogId: blog.id, title: blog.title }
+      });
+      broadcast('notification', { notification });
+    } else if (blog.published) {
+      // Edited while published
+      const notification = await Notification.create({
+        type: 'blog_edited',
+        message: `Blog "${blog.title}" was updated`,
+        meta: { blogId: blog.id, title: blog.title }
+      });
+      broadcast('notification', { notification });
+    }
     res.json({ success: true, data: blog, message: 'Blog updated' });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

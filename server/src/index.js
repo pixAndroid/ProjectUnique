@@ -10,6 +10,7 @@ const serviceRoutes = require('./routes/services');
 const productRoutes = require('./routes/products');
 const analyticsRoutes = require('./routes/analytics');
 const enquiryRoutes = require('./routes/enquiry');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', analyticsRoutes);
 app.use('/api', enquiryRoutes);
+app.use('/api', notificationRoutes);
 
 // Protected blog/service/product admin routes
 app.use('/api', blogRoutes);
@@ -55,6 +57,8 @@ async function seedData() {
   const Service = require('./models/Service');
   const Product = require('./models/Product');
   const Blog = require('./models/Blog');
+  // Ensure Notification table is created
+  require('./models/Notification');
 
   // Seed admin user
   const existingAdmin = await User.findOne({ where: { email: 'admin@uniqueaircon.com' } });

@@ -4,17 +4,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaSnowflake, FaTachometerAlt, FaBlog, FaTools, FaBox, FaEnvelope, FaSignOutAlt } from 'react-icons/fa';
 import { logout } from '@/lib/auth';
+import { useNotifications } from '@/lib/useNotifications';
 
 const navItems = [
   { href: '/dashboard', icon: FaTachometerAlt, label: 'Dashboard' },
   { href: '/dashboard/blogs', icon: FaBlog, label: 'Blogs' },
   { href: '/dashboard/services', icon: FaTools, label: 'Services' },
   { href: '/dashboard/products', icon: FaBox, label: 'Products' },
-  { href: '/dashboard/enquiries', icon: FaEnvelope, label: 'Enquiries' },
+  { href: '/dashboard/enquiries', icon: FaEnvelope, label: 'Enquiries', badge: true },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { newEnquiries } = useNotifications();
 
   const isActive = (href) => {
     if (href === '/dashboard') return pathname === '/dashboard';
@@ -37,6 +39,7 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const count = item.badge ? newEnquiries : 0;
           return (
             <Link
               key={item.href}
@@ -48,7 +51,12 @@ export default function Sidebar() {
               }`}
             >
               <Icon className="text-base flex-shrink-0" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {count > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-0.5 leading-none">
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
             </Link>
           );
         })}

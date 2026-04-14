@@ -1,7 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const Service = require('../models/Service');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
+const { broadcast } = require('../lib/sseBroadcast');
+
+// Helper: check if a counter crossed a 100-milestone
+function crossedMilestone(before, after) {
+  return after > 0 && Math.floor(after / 100) > Math.floor(before / 100);
+}
+function milestone(value) {
+  return Math.floor(value / 100) * 100;
+}
 
 // GET /api/services - public
 router.get('/', async (req, res) => {
@@ -21,9 +31,40 @@ router.get('/:id', async (req, res) => {
   try {
     const service = await Service.findByPk(req.params.id);
     if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
+    const prevViews = service.views;
     service.views += 1;
     await service.save();
+    if (crossedMilestone(prevViews, service.views)) {
+      const notification = await Notification.create({
+        type: 'milestone_view',
+        message: `Service "${service.title}" reached ${milestone(service.views)} views`,
+        meta: { serviceId: service.id, title: service.title, count: service.views }
+      });
+      broadcast('notification', { notification });
+    }
     res.json({ success: true, data: service });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// POST /api/services/:id/click - public (track click count)
+router.post('/:id/click', async (req, res) => {
+  try {
+    const service = await Service.findByPk(req.params.id);
+    if (!service) return res.status(404).json({ success: false, message: 'Service not found' });
+    const prevClicks = service.clickCount;
+    service.clickCount += 1;
+    await service.save();
+    if (crossedMilestone(prevClicks, service.clickCount)) {
+      const notification = await Notification.create({
+        type: 'milestone_click',
+        message: `Service "${service.title}" reached ${milestone(service.clickCount)} clicks`,
+        meta: { serviceId: service.id, title: service.title, count: service.clickCount }
+      });
+      broadcast('notification', { notification });
+    }
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
